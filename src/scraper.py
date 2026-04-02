@@ -1,3 +1,4 @@
+import html
 import feedparser
 import re
 import pandas as pd
@@ -8,8 +9,10 @@ FEEDS = {
     'business': 'https://timesofindia.indiatimes.com/rssfeeds/1898055.cms',
 }
 
+
 def clean_summary(summary):
     clean = re.sub(r'<.*?>', '', summary)
+    clean = html.unescape(clean)  # fixes &amp; &quot; &lt; etc.
     clean = clean.strip()
     return clean
 
@@ -18,7 +21,7 @@ def scrape_feed(url):
     articles = []
 
     for entry in feed.entries:
-        title = entry.title.strip()
+        title = html.unescape(entry.title.strip())
         summary = clean_summary(entry.get('summary', ''))
         link = entry.link.strip()
 
@@ -47,5 +50,6 @@ def get_all_articles():
 
 if __name__ == '__main__':
     df = get_all_articles()
-    print(df.head())
+    pd.set_option('display.max_colwidth', None)  # show full text
+    print(df[['title', 'category']].to_string())
     print(f'\nTotal articles: {len(df)}')
