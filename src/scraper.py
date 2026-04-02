@@ -5,7 +5,7 @@ import pandas as pd
 
 FEEDS = {
     'india': 'https://timesofindia.indiatimes.com/rssfeeds/296589292.cms',
-    'politics': 'https://timesofindia.indiatimes.com/rssfeeds/4719148.cms',
+    'politics': 'https://timesofindia.indiatimes.com/rssfeeds/4719161.cms',
     'business': 'https://timesofindia.indiatimes.com/rssfeeds/1898055.cms',
 }
 
@@ -31,7 +31,8 @@ def scrape_feed(url):
         articles.append({
             'title': title,
             'summary': summary,
-            'link': link
+            'link': link,
+            'published': entry.get('published', 'N/A')
         })
 
     return articles
