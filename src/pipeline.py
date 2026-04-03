@@ -14,6 +14,11 @@ def load_articles():
 
 def build_vector_store(df):
     embeddings = OpenAIEmbeddings(model='text-embedding-3-large')
+    
+    # create content column if it doesn't exist
+    if 'content' not in df.columns:
+        df['content'] = df['title'] + '. ' + df['summary']
+    
     texts = df['content'].tolist()
     metadatas = df[['title', 'link', 'category', 'published']].to_dict('records')
     vector_store = FAISS.from_texts(texts, embedding=embeddings, metadatas=metadatas)
