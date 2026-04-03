@@ -50,6 +50,7 @@ def analyze_sentiment(title, summary):
         return {'sentiment': 'neutral', 'score': 0.5, 'reason': 'could not parse', 'ministry': None, 'keywords': []}
 
 def clean_dataframe(df):
+    df = df.copy()
     df['language'] = df['summary'].apply(detect_language)
     df['title'] = df.apply(lambda row: translate_to_english(row['title'], row['language']), axis=1)
     df['summary'] = df.apply(lambda row: translate_to_english(row['summary'], row['language']), axis=1)

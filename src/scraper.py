@@ -5,10 +5,12 @@ import pandas as pd
 
 FEEDS = {
     'india': 'https://timesofindia.indiatimes.com/rssfeeds/296589292.cms',
-    'politics': 'https://timesofindia.indiatimes.com/rssfeeds/4719161.cms',
+    'politics': 'https://feeds.feedburner.com/ndtvnews-india-news',
     'business': 'https://timesofindia.indiatimes.com/rssfeeds/1898055.cms',
+    'hindi_bhaskar': 'https://www.bhaskar.com/rss-feed/1061/',
+    'hindi_amarujala': 'https://www.amarujala.com/rss/india-news.xml',
+    'marathi_tv9': 'https://www.tv9marathi.com/feed',
 }
-
 
 def clean_summary(summary):
     clean = re.sub(r'<.*?>', '', summary)
@@ -53,4 +55,7 @@ if __name__ == '__main__':
     df = get_all_articles()
     pd.set_option('display.max_colwidth', None)  # show full text
     print(df[['title', 'category']].to_string())
-    print(f'\nTotal articles: {len(df)}')
+#     print(f'\nTotal articles: {len(df)}')
+# if __name__ == '__main__':
+#     df = get_all_articles()
+#     print(df.groupby('category')['title'].count())
