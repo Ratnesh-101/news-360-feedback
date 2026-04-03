@@ -2,6 +2,7 @@ from langdetect import detect
 from deep_translator import GoogleTranslator
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
+from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
 import json
 from scraper import get_all_articles
@@ -56,12 +57,17 @@ def clean_dataframe(df):
     df['summary'] = df.apply(lambda row: translate_to_english(row['summary'], row['language']), axis=1)
     
     print('Running sentiment analysis...')
-    sentiment_results = df.apply(lambda row: analyze_sentiment(row['title'], row['summary']), axis=1)
-    df['sentiment'] = sentiment_results.apply(lambda x: x['sentiment'])
-    df['sentiment_score'] = sentiment_results.apply(lambda x: x['score'])
-    df['reason'] = sentiment_results.apply(lambda x: x['reason'])
-    df['ministry'] = sentiment_results.apply(lambda x: x['ministry'])
-    df['keywords'] = sentiment_results.apply(lambda x: x['keywords'])
+    rows = [row for _, row in df.iterrows()]
+    with ThreadPoolExecutor(max_workers=15) as executor:
+        sentiment_results = list(executor.map(
+            lambda row: analyze_sentiment(row['title'], row['summary']), rows
+        ))
+    
+    df['sentiment'] = [r['sentiment'] for r in sentiment_results]
+    df['sentiment_score'] = [r['score'] for r in sentiment_results]
+    df['reason'] = [r['reason'] for r in sentiment_results]
+    df['ministry'] = [r['ministry'] for r in sentiment_results]
+    df['keywords'] = [r['keywords'] for r in sentiment_results]
     
     return df
 
