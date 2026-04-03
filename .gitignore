@@ -8,3 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+# .gitignore
+.env
+__pycache__/
+*.pyc
+data/*.csv
