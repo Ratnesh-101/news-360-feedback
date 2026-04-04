@@ -1,0 +1,20 @@
+[project]
+name = "src"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "deep-translator>=1.11.4",
+    "faiss-cpu>=1.13.2",
+    "feedparser>=6.0.12",
+    "langchain>=1.2.14",
+    "langchain-community>=0.4.1",
+    "langchain-core>=1.2.25",
+    "langchain-openai>=1.1.12",
+    "langchainhub>=0.1.21",
+    "langdetect>=1.0.9",
+    "openai>=2.30.0",
+    "pandas>=3.0.2",
+    "python-dotenv>=1.2.2",
+]
