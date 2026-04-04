@@ -1,66 +1,80 @@
 import whisper
 import torch
-import tempfile
 import os
+import uuid
+import json
 from pathlib import Path
-from langdetect import detect
 from deep_translator import GoogleTranslator
 import pandas as pd
 from datetime import datetime
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from dotenv import load_dotenv
 
-# Reuse your existing cleaner logic
-from cleaner import analyze_sentiment  # adjust import if needed
+load_dotenv()
 
-
+# ── constants ────────────────────────────────────────────────────────────────
 SUPPORTED_AUDIO = [".mp3", ".wav", ".m4a", ".ogg", ".flac", ".mp4"]
-MODEL_NAME = "large-v3"
+MODEL_NAME = os.getenv("WHISPER_MODEL", "medium")
+CSV_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "articles.csv")
 
-_model = None  # lazy-load singleton
+# ── LLM setup ────────────────────────────────────────────────────────────────
+llm = ChatOpenAI(model="gpt-5-mini", temperature=0)
+
+prompt = ChatPromptTemplate.from_messages([
+    ("system", """You are a senior Indian political news analyst working for the Government of India.
+Analyze the sentiment of the given news article from an Indian governance perspective.
+
+Guidelines:
+- "positive": good news for governance, development, policy success, welfare schemes
+- "negative": scandals, removals, failures, protests, criticism of government/policy
+- "neutral": factual reporting, transfers, routine announcements with no clear positive/negative impact
+
+Respond in JSON format only with these fields:
+{{
+    "sentiment": "positive/negative/neutral",
+    "score": 0.0 to 1.0,
+    "reason": "one line explanation",
+    "ministry": "relevant Indian government ministry or scheme if any, else null",
+    "keywords": ["key", "terms"]
+}}
+"""),
+    ("human", "Title: {title}\nSummary: {summary}")
+])
+
+# ── Whisper singleton ─────────────────────────────────────────────────────────
+_whisper_model = None
 
 
-def load_whisper_model(model_name: str = MODEL_NAME) -> whisper.Whisper:
-    """Lazy-load Whisper model onto GPU if available."""
-    global _model
-    if _model is None:
+def load_whisper_model() -> whisper.Whisper:
+    global _whisper_model
+    if _whisper_model is None:
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(f"[Whisper] Loading {model_name} on {device}...")
-        _model = whisper.load_model(model_name, device=device)
-        print("[Whisper] Model ready.")
-    return _model
+        print(f"[Whisper] Loading {MODEL_NAME} on {device}...")
+        _whisper_model = whisper.load_model(MODEL_NAME, device=device)
+        print("[Whisper] Ready.")
+    return _whisper_model
 
 
+# ── core functions ────────────────────────────────────────────────────────────
 def transcribe_audio(file_bytes: bytes, filename: str) -> dict:
-    """
-    Transcribe audio bytes → dict with transcript, detected language,
-    English translation, and sentiment.
-
-    Returns:
-        {
-            "title": str,
-            "original_text": str,
-            "translated_text": str,
-            "language": str,
-            "sentiment": str,   # Positive / Negative / Neutral
-            "source": "audio_upload",
-            "published": str,   # ISO datetime
-        }
-    """
     suffix = Path(filename).suffix.lower()
     if suffix not in SUPPORTED_AUDIO:
-        raise ValueError(f"Unsupported format: {suffix}. Use {SUPPORTED_AUDIO}")
+        raise ValueError(f"Unsupported format '{suffix}'. Allowed: {SUPPORTED_AUDIO}")
 
-    # Write to temp file (Whisper needs a file path)
-    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+    tmp_path = os.path.join(os.path.expanduser("~"), f"whisper_tmp_{uuid.uuid4().hex}{suffix}")
+    with open(tmp_path, "wb") as tmp:
         tmp.write(file_bytes)
-        tmp_path = tmp.name
 
     try:
         model = load_whisper_model()
 
-        # Transcribe — Whisper auto-detects language
         result = model.transcribe(
             tmp_path,
-            task="transcribe",       # keep original language
+            task="transcribe",
             verbose=False,
             fp16=torch.cuda.is_available(),
         )
@@ -68,48 +82,59 @@ def transcribe_audio(file_bytes: bytes, filename: str) -> dict:
         original_text = result["text"].strip()
         detected_lang = result.get("language", "unknown")
 
-        # Translate to English if not already English
-        if detected_lang != "en" and len(original_text) > 0:
+        if detected_lang != "en" and original_text:
             try:
                 translated_text = GoogleTranslator(
-                    source="auto", target="en"
-                ).translate(original_text[:4999])  # API limit guard
+                    source="auto", target="english"
+                ).translate(original_text[:4999])
             except Exception:
                 translated_text = original_text
         else:
             translated_text = original_text
 
-        # Sentiment via your existing GPT pipeline
-        sentiment = analyze_sentiment(translated_text)
+        title = f"Audio — {Path(filename).stem}"
+        sentiment_result = _analyze_sentiment(title, translated_text)
 
         return {
-            "title": f"Audio Upload — {Path(filename).stem}",
-            "original_text": original_text,
+            "title":           title,
+            "summary":         translated_text,
+            "link":            f"audio://{filename}",
+            "published":       datetime.now().isoformat(),
+            "source":          "audio_upload",
+            "category":        "audio",
+            "language":        detected_lang,
+            "sentiment":       sentiment_result["sentiment"],
+            "sentiment_score": sentiment_result["score"],
+            "reason":          sentiment_result["reason"],
+            "ministry":        sentiment_result["ministry"],
+            "keywords":        sentiment_result["keywords"],
+            "original_text":   original_text,
             "translated_text": translated_text,
-            "language": detected_lang,
-            "sentiment": sentiment,
-            "source": "audio_upload",
-            "published": datetime.now().isoformat(),
         }
 
     finally:
-        os.unlink(tmp_path)  # always clean up temp file
+        os.unlink(tmp_path)
 
 
-def append_to_articles_csv(record: dict, csv_path: str = "data/articles.csv") -> pd.DataFrame:
-    """Append a new audio-derived article to the existing CSV."""
-    df_existing = pd.read_csv(csv_path) if Path(csv_path).exists() else pd.DataFrame()
-
-    new_row = pd.DataFrame([{
-        "title":      record["title"],
-        "text":       record["translated_text"],
-        "language":   record["language"],
-        "sentiment":  record["sentiment"],
-        "source":     record["source"],
-        "published":  record["published"],
-        "original_text": record["original_text"],
-    }])
-
-    df_updated = pd.concat([df_existing, new_row], ignore_index=True)
-    df_updated.to_csv(csv_path, index=False)
+def append_to_csv(record: dict, csv_path: str = CSV_PATH) -> pd.DataFrame:
+    path = Path(csv_path)
+    df_existing = pd.read_csv(path) if path.exists() else pd.DataFrame()
+    df_updated = pd.concat([df_existing, pd.DataFrame([record])], ignore_index=True)
+    df_updated.to_csv(path, index=False)
     return df_updated
+
+
+# ── internal ──────────────────────────────────────────────────────────────────
+def _analyze_sentiment(title: str, summary: str) -> dict:
+    chain = prompt | llm
+    result = chain.invoke({"title": title, "summary": summary})
+    try:
+        return json.loads(result.content)
+    except Exception:
+        return {
+            "sentiment": "neutral",
+            "score": 0.5,
+            "reason": "could not parse",
+            "ministry": None,
+            "keywords": [],
+        }
