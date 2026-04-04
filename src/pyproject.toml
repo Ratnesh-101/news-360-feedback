@@ -1,14 +1,9 @@
 [project]
-<<<<<<< HEAD
 name = "src"
-=======
-name = "sih1329"
->>>>>>> 1167698b702bf22945605502f898c81f9079a1d2
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
-<<<<<<< HEAD
 dependencies = [
     "deep-translator>=1.11.4",
     "faiss-cpu>=1.13.2",
@@ -22,11 +17,4 @@ dependencies = [
     "openai>=2.30.0",
     "pandas>=3.0.2",
     "python-dotenv>=1.2.2",
-=======
-dependencies = []
-
-[tool.uv.workspace]
-members = [
-    "src",
->>>>>>> 1167698b702bf22945605502f898c81f9079a1d2
 ]
