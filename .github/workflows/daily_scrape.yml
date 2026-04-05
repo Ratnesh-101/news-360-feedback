@@ -47,12 +47,14 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          cp data/articles.csv /tmp/articles_new.csv
           git fetch origin main
           git reset --hard origin/main
+          cp /tmp/articles_new.csv data/articles.csv
           git add data/articles.csv
           if git diff --staged --quiet; then
             echo "No changes to commit, skipping."
           else
             git commit -m "data: auto-update articles $(date +'%Y-%m-%d')"
-            git push --force-with-lease origin main
+            git push origin main
           fi
