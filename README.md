@@ -34,18 +34,20 @@ Government ministries lack a unified system to monitor how their policies and sc
 ---
 
 ## 🏗️ Architecture
+```text
 RSS Feeds → scraper.py → cleaner.py (translate + GPT sentiment)
-↓
-data/articles.csv
-↓
-pipeline.py (FAISS + RAG Agent)
-↓
-app.py (Streamlit)
-↓
-┌─────────────────────────────────┐
-│  Dashboard | Ministry Tracker   │
-│  Chat with News | Audio News    │
-└─────────────────────────────────┘
+                                ↓
+                        data/articles.csv
+                                ↓
+                    pipeline.py (FAISS + RAG Agent)
+                                ↓
+                           app.py (Streamlit)
+                                ↓
+              ┌─────────────────────────────────┐
+              │  Dashboard | Ministry Tracker   │
+              │  Chat with News | Audio News    │
+              └─────────────────────────────────┘
+```
 
 ---
 
