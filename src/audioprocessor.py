@@ -15,7 +15,7 @@ load_dotenv()
 
 # ── constants ────────────────────────────────────────────────────────────────
 SUPPORTED_AUDIO = [".mp3", ".wav", ".m4a", ".ogg", ".flac", ".mp4"]
-MODEL_NAME = os.getenv("WHISPER_MODEL", "medium")
+MODEL_NAME = os.getenv("WHISPER_MODEL", "base")
 CSV_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "articles.csv")
 
 # ── LLM setup ────────────────────────────────────────────────────────────────
