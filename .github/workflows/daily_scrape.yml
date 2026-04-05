@@ -11,6 +11,9 @@ permissions:
 jobs:
   scrape:
     runs-on: ubuntu-latest
+    concurrency:
+      group: scrape-main
+      cancel-in-progress: true
 
     steps:
       - name: Checkout repo
@@ -19,11 +22,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: main
           fetch-depth: 0
-
-      - name: Sync with remote
-        run: |
-          git fetch origin main
-          git reset --hard origin/main
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -44,10 +42,12 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git reset --hard origin/main
           git add data/articles.csv
           if git diff --staged --quiet; then
             echo "No changes to commit, skipping."
           else
             git commit -m "data: auto-update articles $(date +'%Y-%m-%d')"
-            git push origin main
+            git push --force-with-lease origin main
           fi
