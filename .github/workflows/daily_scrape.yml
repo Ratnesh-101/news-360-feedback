@@ -20,6 +20,11 @@ jobs:
           ref: main
           fetch-depth: 0
 
+      - name: Sync with remote
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -39,8 +44,6 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin main
-          git rebase origin/main
           git add data/articles.csv
           if git diff --staged --quiet; then
             echo "No changes to commit, skipping."
