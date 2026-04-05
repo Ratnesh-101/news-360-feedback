@@ -95,8 +95,8 @@ streamlit run app.py
 ```
 
 ---
-
 ## 📁 Project Structure
+```text
 news-360-feedback/
 ├── app.py                  # Streamlit application
 ├── data/
@@ -109,6 +109,7 @@ news-360-feedback/
 │   └── audionews.py        # Audio News page component
 ├── requirements.txt
 └── pyproject.toml
+```
 
 ---
 
