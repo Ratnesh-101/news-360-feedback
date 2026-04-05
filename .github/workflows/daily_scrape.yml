@@ -17,6 +17,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          ref: main
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -40,4 +42,4 @@ jobs:
           git pull --rebase origin main
           git add data/articles.csv
           git diff --staged --quiet || git commit -m "data: auto-update articles $(date +'%Y-%m-%d')"
-          git push
+          git push origin main
