@@ -1,9 +1,0 @@
-feedparser
-pandas
-langchain
-langchain-openai
-langchain-community
-faiss-cpu
-streamlit
-python-dotenv
-openai
