@@ -5,7 +5,7 @@ torchaudio
 streamlit>=1.35.0
 python-dotenv
 
-langchain==1.2.14
+langchain>=0.3.0
 langchain-openai>=0.1.0
 langchain-community>=0.2.0
 faiss-cpu>=1.8.0
@@ -19,8 +19,9 @@ numpy>=1.26.0
 feedparser>=6.0.11
 requests>=2.31.0
 beautifulsoup4>=4.12.0
+certifi>=2024.0.0
 
 langdetect>=1.0.9
 deep-translator>=1.11.4
 
-pandas>=2.2.0
+pandas>=2.0.0
