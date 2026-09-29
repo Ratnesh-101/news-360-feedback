@@ -35,18 +35,20 @@ Government ministries lack a unified system to monitor how their policies and sc
 
 ## 🏗️ Architecture
 ```text
-RSS Feeds → scraper.py → cleaner.py (translate + GPT sentiment)
+RSS Feeds → scraper.py → cleaner.py (translate + LLM sentiment)
                                 ↓
                         data/articles.csv
                                 ↓
-                    pipeline.py (FAISS + RAG Agent)
+                    FastAPI Bridge (api/main.py)
                                 ↓
-                           app.py (Streamlit)
-                                ↓
-              ┌─────────────────────────────────┐
-              │  Dashboard | Ministry Tracker   │
-              │  Chat with News | Audio News    │
-              └─────────────────────────────────┘
+        ┌────────────────────────────────────────────────────────┐
+        │  Vite + React 19 + TypeScript (web/)                   │
+        │  • Command Center Dashboard (KPI Grid, Net Index)      │
+        │  • Ministry Reputation Radar (5-Axis Radar Chart)      │
+        │  • RAG Chat Analyst Drawer (SSE Streaming + Citations) │
+        │  • Audio Studio (Whisper Dual-Transcript + Approval)   │
+        │  • Daily Executive Situation Brief (Printable Gazette) │
+        └────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -55,25 +57,24 @@ RSS Feeds → scraper.py → cleaner.py (translate + GPT sentiment)
 
 | Component | Technology |
 |-----------|------------|
-| Frontend | Streamlit |
+| Frontend | React 19 + Vite + TypeScript (Strict) + Tailwind CSS |
+| UI & Charts | Recharts, Lucide Icons, Situation Room Tokens |
+| State & Routing | TanStack Query v5, Zustand, React Router |
+| Backend API | FastAPI + Uvicorn (REST + SSE Streaming) |
 | LLM | OpenAI GPT-4o-mini |
 | Embeddings | text-embedding-3-large |
 | Vector Store | FAISS |
-| RAG Agent | LangChain + LangGraph |
-| Transcription | OpenAI Whisper (medium) |
+| Audio Transcription | OpenAI Whisper |
 | Translation | deep-translator |
-| Language Detection | langdetect |
-| Data | feedparser + pandas |
+| Regional Media | Hindi, Marathi, English RSS Feeds (Bhaskar, Amar Ujala, TV9, TOI, NDTV) |
 
 ---
 
 ## 🚀 Local Setup
 
 ### Prerequisites
-- Python 3.13
-- Anaconda
-- NVIDIA GPU (recommended for Whisper)
-- ffmpeg (`conda install ffmpeg -c conda-forge`)
+- Python 3.10 – 3.13
+- ffmpeg (`brew install ffmpeg` on macOS, or `conda install ffmpeg -c conda-forge`)
 
 ### Installation
 ```bash
@@ -83,14 +84,36 @@ pip install -r requirements.txt
 ```
 
 ### Environment Variables
-Create a `.env` file in the root:
-OPENAI_API_KEY=your_key_here
-WHISPER_MODEL=medium
-
-### Run
+Copy `.env.example` to `.env` in the root:
 ```bash
-# Windows
-$env:KMP_DUPLICATE_LIB_OK="TRUE"
+cp .env.example .env
+```
+And add your OpenAI API key:
+```env
+OPENAI_API_KEY=your_key_here
+OPENAI_MODEL=gpt-4o-mini
+OPENAI_EMBEDDING_MODEL=text-embedding-3-large
+WHISPER_MODEL=base
+```
+
+### Run Application
+
+#### Option 1: Modern Situation Room (React + TypeScript + FastAPI)
+```bash
+./start_dev.sh
+```
+Or start individually:
+```bash
+# Terminal 1: FastAPI Backend
+.venv/bin/uvicorn api.main:app --reload --port 8000
+
+# Terminal 2: React + TypeScript Frontend
+cd web && npm run dev
+```
+Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+#### Option 2: Classic Streamlit Dashboard
+```bash
 streamlit run app.py
 ```
 
@@ -98,15 +121,29 @@ streamlit run app.py
 ## 📁 Project Structure
 ```text
 news-360-feedback/
-├── app.py                  # Streamlit application
+├── api/                    # FastAPI Backend Bridge
+│   ├── main.py             # REST + SSE endpoints
+│   ├── storage.py          # In-memory indexing & querying
+│   └── metrics.py          # Net sentiment, z-score alerts, urgency
+├── web/                    # React 19 + TypeScript + Vite Frontend
+│   ├── src/
+│   │   ├── app/            # Layout, AppShell, router
+│   │   ├── features/       # Dashboard, Ministries, Chat, Audio, Briefings
+│   │   ├── components/     # SentimentBadge, ScoreMeter, LangTag, ArticleDrawer
+│   │   ├── lib/            # API client, SSE streaming, sentiment utils
+│   │   ├── stores/         # Zustand filters and UI state
+│   │   └── types/          # Strict TypeScript domain interfaces
+│   └── package.json
 ├── data/
-│   └── articles.csv        # Scraped & analysed articles
-├── src/
-│   ├── scraper.py          # RSS feed scraper
+│   └── articles.csv        # Scraped & analysed articles (391 records)
+├── src/                    # Core Python Scrapers & Pipelines
+│   ├── scraper.py          # RSS feed scraper (TOI, NDTV, Bhaskar, TV9)
 │   ├── cleaner.py          # Translation + sentiment analysis
 │   ├── pipeline.py         # FAISS vector store + RAG agent
 │   ├── audioprocessor.py   # Whisper transcription pipeline
-│   └── audionews.py        # Audio News page component
+│   └── audionews.py        # Audio News component
+├── app.py                  # Streamlit application
+├── start_dev.sh            # Development launcher script
 ├── requirements.txt
 └── pyproject.toml
 ```
