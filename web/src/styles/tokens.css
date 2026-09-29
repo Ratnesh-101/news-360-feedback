@@ -1,0 +1,41 @@
+:root {
+  --ink: #0B2545;
+  --navy: #13315C;
+  --chakra: #1F5FBF;
+  --paper: #F4F6F9;
+  --surface: #FFFFFF;
+  --rule: #D5DCE6;
+  --pos: #1B7F53;
+  --neg: #C23A2E;
+  --warn: #B97A00;
+  --neu: #7A8699;
+}
+
+.dark {
+  --ink: #E8EEF7;
+  --navy: #0A1626;
+  --chakra: #5B9BF0;
+  --paper: #0E1B2E;
+  --surface: #14243B;
+  --rule: #26374F;
+  --pos: #3DBE8B;
+  --neg: #F0665A;
+  --warn: #E9A82B;
+  --neu: #8C99AD;
+}
+
+:lang(hi), :lang(mr) {
+  font-family: "Noto Sans Devanagari", var(--font-sans, system-ui, sans-serif);
+}
+
+:lang(pa) {
+  font-family: "Noto Sans Gurmukhi", var(--font-sans, system-ui, sans-serif);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
